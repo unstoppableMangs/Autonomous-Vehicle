@@ -1,0 +1,6 @@
+
+<launch>
+    <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop_twist_keyboard" output="screen"/>
+    <node pkg="pololu_maestro_ros" type="set_servo_server" name="set_servo_server"/>
+    <node pkg="sparse_mapper" type="twist_to_motor.py" name="twist_to_motor"/>
+</launch>

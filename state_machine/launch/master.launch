@@ -1,0 +1,21 @@
+<launch>
+  <!-- POLOLU ROS NODE -->
+  <node pkg="pololu_maestro_ros" type="set_servo_server" name="set_servo_server"/>
+  <!-- Realsense ROS Node -->
+  <include file="/opt/ros/melodic/share/realsense2_camera/launch/rs_camera.launch"/>
+
+    <!-- Main state machine file -->
+   <node pkg="state_machine" type="maincontroller.py" name="maincontroller" output="screen" />
+
+  <!-- Depth node -->
+   <node pkg="camera" type ="depth" name="depth_stream" output="screen">
+     <param name="frame_rate" type="int" value="60" />
+     <param name="resolution_height" type="int" value="480" />
+     <param name="resolution_width" type="int" value="848" />
+   </node>
+
+  <!-- PID Node -->
+    <node pkg="pid_controller" type ="output_publisher.py" name="output_publisher" output="screen"/>
+
+
+</launch>

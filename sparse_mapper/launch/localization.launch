@@ -1,0 +1,36 @@
+<launch>
+
+    <include file="/home/odroid/catkin_ws_sc1/src/phidgets_drivers/phidgets_imu/launch/imu.launch"/>
+    <param name="std" type="double" value="0.5"/>
+    <param name="std_angle" type="double" value="0.05"/>
+    <param name="lin_offset" value="[-0.3,0,0]"/>
+    <param name="ang_offset" value="[0,0,0]"/>
+    <node pkg="fixImu" type="fixImu.py" name="imu_fixed" output="screen"/>
+    <node pkg="tf" type="static_transform_publisher" name="imu_to_base_link" args="0 0 0 0 0 0 base_link imu 20" />
+
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" clear_params="true">
+    <!-- <param name="predict_to_current_time" value="true"/> -->
+    <param name="frequency" value="20"/>
+    <param name="two_d_mode" value="true"/>
+    <param name="publish_tf" value="true"/>
+    <param name="imu0" value="imu/data1"/>
+    <rosparam param="imu0_config">[false, false, false,
+                                   false,  false,  true,
+                                   false,  false,  false,
+                                   false,  false,  true,
+                                   false,  false,  false]</rosparam>
+    <param name="imu0_differential" value="false"/>
+    <param name="imu0_relative" value="true" />
+    <param name="odom0" value="wheel_vel/odom"/>
+    <rosparam param="odom0_config">[false, false, false,
+                                   false,  false,  false,
+                                   true,  false,  false,
+                                   false,  false,  false,
+                                   false,  false,  false]</rosparam>
+    <param name="print_diagnostics" value="true" />
+  </node>
+ 
+
+  <!-- <node pkg="sparse_mapper" type="calibrate.py" name="calibrate" /> -->
+ 
+</launch>

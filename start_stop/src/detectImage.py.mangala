@@ -1,0 +1,72 @@
+#!/usr/bin/python
+import cv2, rospy
+import numpy as np
+from sensor_msgs.msg import Image
+from std_msgs.msg import Bool 
+from cv_bridge import CvBridge
+import pytesseract
+
+
+
+class detect_image_node(object):
+    def __init__(self):
+        self.stop_sign_pub = rospy.Publisher('/stop_sign_found',Bool, queue_size=10)
+        self.bridge = CvBridge()
+        self.mx_iter = 10000
+        rospy.Subscriber('camera/image',Image,self.image_callback)
+
+    def image_callback(self, msg):
+        cv_image = self.bridge.imgmsg_to_cv2(msg,"bgr8")
+        cv_image = cv2.resize(cv_image,(848,480))
+        red_upprange= np.array([255,50,50], dtype = "uint8")
+        red_lowrange= np.array([125,0,0], dtype = "uint8")
+        Red_color= cv2.inRange(cv_image,red_lowrange,red_upprange)
+        output= cv2.bitwise_and(cv_image,cv_image,mask=Red_color)
+
+        output[np.where((output!=[0,0,0]).all(axis=2))] = [255,255,255]
+        params = cv2.SimpleBlobDetector_Params()
+        #params.filterByColor = True
+        params.filterByArea = True
+        params.minArea = 500
+        detector=cv2.SimpleBlobDetector_create(params)
+        keypoints= detector.detect(cv_image)
+        print(keypoints)
+
+        #text code
+        #convert image to gray
+        gray_image= cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
+        #Threshold to convert image to gray
+        #_,thresh= cv2.threshold(gray_image,0,255,cv2.THRESH_BINARY_INV| cv2.THRESH_OTSU)
+        #text
+        text_= pytesseract.image_to_string(gray_image)
+        print(text_)
+        my_word = "STOP"
+        value=False
+        if my_word in text_:
+            print("TRUEEEEEEEEEEEE")
+            value=True
+        else:
+            print("FALLLLLSEEEEEEE")
+            value=False
+        #im_with_keypoints = cv2.drawKeypoints(output, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+        
+
+        if len(keypoints) > 0 and value==True:
+            rospy.loginfo("Stop sign FOUND")
+            self.stop_sign_pub.publish(True)
+        else:
+            self.stop_sign_pub.publish(False)
+
+        # # Uncomment for visualization of images
+        if True:
+            rospy.loginfo('Printnig Images.')
+            #cv2.imshow('Image', output)
+            cv2.imshow('Image_orig', cv_image)
+            #cv2.imshow('Gray_Image_orig', gray_image)
+            cv2.waitKey(1)
+        self.mx_iter-=1
+    
+if __name__=='__main__':
+    rospy.init_node('see_image')
+    detect_image_node = detect_image_node()
+    rospy.spin()
